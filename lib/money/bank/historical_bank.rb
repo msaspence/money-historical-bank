@@ -3,6 +3,7 @@ require 'money'
 require 'date'
 
 require File.expand_path(File.dirname(__FILE__)) + "/open_exchange_rates_loader"
+require File.expand_path(File.dirname(__FILE__)) + "/default_cache"
 
 class Money
   module Bank
@@ -14,7 +15,15 @@ class Money
       attr_reader :rates
       # Available formats for importing/exporting rates.
       RATE_FORMATS = [:json, :ruby, :yaml]
-      
+
+      def self.config options
+        @cache = options[:cache]
+      end
+
+      def self.cache
+        @cache ||= DefaultCache.new
+      end
+
       def setup
         @rates = {}
         @mutex = Mutex.new
@@ -38,7 +47,7 @@ class Money
           internal_set_rate(date, from, to, rate)
         end
       end
-      
+
       # Retrieve the rate for the given currencies. Uses +Mutex+ to synchronize
       # data access. If no rates have been set for +date+, will try to load them
       # using #load_data.
@@ -90,7 +99,7 @@ class Money
           rate
         end
       end
-      
+
       #
       # @overload exchange_with(from, to_currency)
       #   Exchanges the given +Money+ object to a new +Money+ object in
